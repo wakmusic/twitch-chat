@@ -53,8 +53,8 @@ const Content: FC<ContentProps> = ({ content, emotes }) => {
   );
 };
 
-const Container = styled.span`
-  display: inline-block;
+const Container = styled.div`
+  display: inline;
   vertical-align: baseline;
 
   font-weight: 300;
