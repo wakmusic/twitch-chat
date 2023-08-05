@@ -28,7 +28,7 @@ const filterUser = (nickname: string, tagsObj: Record<string, string>) => {
     }
   }
 
-  return true;
+  return false;
 };
 
 const App: FC = () => {
