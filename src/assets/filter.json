@@ -59,19 +59,6 @@
         "category": "name",
         "id": "6sUSAeHzbEjCjBWpGH7Mt",
         "type": "include",
-        "value": "미니박스__"
-      }
-    ],
-    "id": "PA8fMSyys9PZp3Z9RCsRz"
-  },
-  {
-    "filterNote": "",
-    "filterType": "include",
-    "filters": [
-      {
-        "category": "name",
-        "id": "6sUSAeHzbEjCjBWpGH7Mt",
-        "type": "include",
         "value": "해루석"
       }
     ],

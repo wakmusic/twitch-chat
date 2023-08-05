@@ -28,7 +28,7 @@ const filterUser = (nickname: string, tagsObj: Record<string, string>) => {
     }
   }
 
-  return false;
+  return true;
 };
 
 const App: FC = () => {
@@ -152,7 +152,7 @@ const App: FC = () => {
                 color: tagsObj.color,
                 badges,
               },
-            ].slice(-100)
+            ].slice(-50)
           );
         }
       }, delay);
@@ -173,13 +173,20 @@ const App: FC = () => {
 
   return (
     <Container>
-      <ChatContainer style={{ height: "29.8vh" }} ref={topRef}>
+      <ChatContainer
+        style={{
+          height: "17vh",
+          borderBottom: "3px solid #26262b",
+          paddingBottom: "4px",
+        }}
+        ref={topRef}
+      >
         {topChats.map((chat, index) => (
           <Chat key={index} chat={chat} badges={badges} />
         ))}
       </ChatContainer>
 
-      <ChatContainer style={{ height: "69.8vh" }} ref={bottomRef}>
+      <ChatContainer style={{ height: "83vh" }} ref={bottomRef}>
         {chats.map((chat, index) => (
           <Chat key={index} chat={chat} badges={badges} />
         ))}
