@@ -1,35 +1,8 @@
 import { FC, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
-import filter from "./assets/filter.json";
 import Chat from "./components/Chat";
 import { BadgeType, ChatType } from "./types";
-
-const IRC_REGEX = /^(@([^ ]*) )?(:([^ ]+) +)?([^ ]+)( *( .+))?/;
-
-const filterUser = (nickname: string, tagsObj: Record<string, string>) => {
-  const badges = tagsObj.badges;
-  const special = ["broadcaster", "moderator", "vip", "verified"];
-
-  if (badges) {
-    for (const specialBadge of special) {
-      if (badges.includes(specialBadge)) {
-        console.log("special", specialBadge);
-        return true;
-      }
-    }
-  }
-
-  for (const filterObj of filter) {
-    const value = filterObj.filters[0].value;
-
-    if (nickname === value) {
-      console.log("filter", value);
-      return true;
-    }
-  }
-
-  return false;
-};
+import { parseMessage } from "./utils";
 
 const App: FC = () => {
   const ws = useRef<WebSocket | null>(null);
@@ -79,7 +52,7 @@ const App: FC = () => {
 
     const params = new URLSearchParams(location.search);
     const channel = params.get("channel") || "woowakgood";
-    const delay = Number(params.get("delay") || "5") * 1000;
+    const delay = Number(params.get("delay") || "0") * 1000;
 
     ws.current = new WebSocket("wss://irc-ws.chat.twitch.tv");
     ws.current.addEventListener("open", () => {
@@ -92,68 +65,15 @@ const App: FC = () => {
     });
 
     ws.current.addEventListener("message", (e) => {
-      const parsed = IRC_REGEX.exec(e.data);
-      if (!parsed) return;
+      const chat = parseMessage(e.data);
 
-      const [, , tags, , user, , , message] = parsed;
-
-      const tagsObj = tags.split(";").reduce((acc, tag) => {
-        const [key, value] = tag.split("=");
-        return { ...acc, [key]: value };
-      }, {} as Record<string, string>);
-
-      const id = user.split("!")[0];
-      const nickname = tagsObj["display-name"];
-      const content = message.split(":")[1];
-      const emotes = tagsObj.emotes
-        ? tagsObj.emotes.split("/").reduce((acc, emote) => {
-            const [id, indexes] = emote.split(":");
-
-            indexes.split(",").forEach((index) => {
-              acc[index] = id;
-            });
-
-            return acc;
-          }, {} as Record<string, string>)
-        : {};
-
-      const badges: string[] = [];
-
-      if (tagsObj.badges) {
-        tagsObj.badges.split(",").forEach((badge) => {
-          badges.push(badge);
-        });
-      }
+      if (!chat) return;
 
       setTimeout(() => {
-        setChats((prev) =>
-          [
-            ...prev,
-            {
-              id,
-              nickname,
-              content,
-              emotes,
-              color: tagsObj.color,
-              badges,
-            },
-          ].slice(-100)
-        );
+        setChats((prev) => [...prev, chat].slice(-100));
 
-        if (filterUser(nickname, tagsObj)) {
-          setTopChats((prev) =>
-            [
-              ...prev,
-              {
-                id,
-                nickname,
-                content,
-                emotes,
-                color: tagsObj.color,
-                badges,
-              },
-            ].slice(-50)
-          );
+        if (chat.isNamed) {
+          setTopChats((prev) => [...prev, chat].slice(-50));
         }
       }, delay);
     });

@@ -7,6 +7,8 @@ export interface ChatType {
   };
   color: string;
   badges: string[];
+
+  isNamed: boolean;
 }
 
 export type BadgeType = {
