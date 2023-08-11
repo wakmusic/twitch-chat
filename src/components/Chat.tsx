@@ -1,29 +1,19 @@
 import { FC } from "react";
 import styled from "styled-components";
-import { BadgeType, ChatType } from "../types";
+import { ChatType } from "../types";
 import Content from "./Content";
 
 interface ChatProps {
   chat: ChatType;
-  badges: BadgeType[];
 }
 
-const Chat: FC<ChatProps> = ({ chat, badges }) => {
+const Chat: FC<ChatProps> = ({ chat }) => {
   return (
     <ChatBox>
       <InnerContainer>
-        {chat.badges.map((badge) => {
-          const [name, version] = badge.split("/");
-          const badgeData = badges.find((badge) => badge.set_id === name);
-
-          if (!badgeData) return null;
-
-          const url = badgeData.versions.find(
-            (versionData) => versionData.id === version
-          )?.image_url_1x;
-
-          return <Badge key={badge} src={url} alt={name} />;
-        })}
+        {chat.badgeImages?.map((url, idx) => (
+          <Badge key={idx} src={url} />
+        ))}
         <Nickname color={chat.color}>{chat.nickname} </Nickname>
         <Id color={chat.color}>({chat.id})</Id>:{" "}
         <Content content={chat.content} emotes={chat.emotes} />

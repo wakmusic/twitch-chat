@@ -1,4 +1,7 @@
 export interface ChatType {
+  key: string;
+  channel: string;
+
   id: string;
   nickname: string;
   content: string;
@@ -9,6 +12,8 @@ export interface ChatType {
   badges: string[];
 
   isNamed: boolean;
+
+  badgeImages?: string[];
 }
 
 export type BadgeType = {

@@ -2,80 +2,71 @@ import { FC, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import Chat from "./components/Chat";
 import { BadgeType, ChatType } from "./types";
-import { parseMessage } from "./utils";
+import { connectWebSocket, getBadges } from "./utils";
 
 const App: FC = () => {
-  const ws = useRef<WebSocket | null>(null);
   const [topChats, setTopChats] = useState<ChatType[]>([]);
   const [chats, setChats] = useState<ChatType[]>([]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [badges, setBadges] = useState<BadgeType[]>([]);
-
+  const ws = useRef<WebSocket | null>(null);
   const topRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const badges = useRef<BadgeType[]>([]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const channel = params.get("channel") || "woowakgood";
+    const channelsParam = params.getAll("channel");
+    const channels =
+      channelsParam.length === 0 ? ["woowakgood"] : channelsParam;
 
     (async () => {
       const globalRes = await fetch("https://api.wakscord.xyz/badges/global");
-      const badges: BadgeType[] = (await globalRes.json()).data;
+      const badges_: BadgeType[] = (await globalRes.json()).data;
 
-      const channelRes = await fetch(
-        "https://api.wakscord.xyz/badges/" + channel
-      );
+      for (const channel of channels) {
+        const channelRes = await fetch(
+          "https://api.wakscord.xyz/badges/" + channel
+        );
 
-      const data: {
-        data: BadgeType[];
-      } = await channelRes.json();
+        const data: {
+          data: BadgeType[];
+        } = await channelRes.json();
 
-      data.data.forEach((badge) => {
-        const index = badges.findIndex((b) => b.set_id === badge.set_id);
+        data.data.forEach((badge) => {
+          badge.set_id = `${channel}-${badge.set_id}`;
+          badges_.push(badge);
+        });
+      }
 
-        if (index === -1) {
-          badges.push(badge);
-        } else {
-          badges[index] = badge;
-        }
-
-        badges.push(badge);
-      });
-
-      setBadges(badges);
+      badges.current = badges_;
     })();
   }, []);
 
   useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const delay = Number(params.get("delay") || "0") * 1000;
+    const channelsParam = params.getAll("channel");
+    const channels =
+      channelsParam.length === 0 ? ["woowakgood"] : channelsParam;
+
     if (ws.current) return;
 
-    const params = new URLSearchParams(location.search);
-    const channel = params.get("channel") || "woowakgood";
-    const delay = Number(params.get("delay") || "0") * 1000;
+    const addChat = (chat: ChatType) => {
+      if (chat.badges.length !== 0) {
+        const channel = chat.channel.split("#")[1];
 
-    ws.current = new WebSocket("wss://irc-ws.chat.twitch.tv");
-    ws.current.addEventListener("open", () => {
-      console.log("Connected to Twitch");
-      ws.current!.send("CAP REQ :twitch.tv/tags");
-      ws.current!.send("PASS SCHMOOPIIE");
-      ws.current!.send("NICK justinfan42601");
-      ws.current!.send("USER justinfan42601 8 * :justinfan42601");
-      ws.current!.send("JOIN #" + channel);
-    });
+        chat.badgeImages = getBadges(badges.current, channel, chat.badges);
+      }
 
-    ws.current.addEventListener("message", (e) => {
-      const chat = parseMessage(e.data);
+      setChats((prev) => [...prev, chat].slice(-100));
 
-      if (!chat) return;
+      if (chat.isNamed) {
+        setTopChats((prev) => [...prev, chat].slice(-50));
+      }
+    };
 
-      setTimeout(() => {
-        setChats((prev) => [...prev, chat].slice(-100));
-
-        if (chat.isNamed) {
-          setTopChats((prev) => [...prev, chat].slice(-50));
-        }
-      }, delay);
+    ws.current = connectWebSocket(channels, delay, addChat, (newWebSocket) => {
+      ws.current = newWebSocket;
     });
   }, []);
 
@@ -101,14 +92,14 @@ const App: FC = () => {
         }}
         ref={topRef}
       >
-        {topChats.map((chat, index) => (
-          <Chat key={index} chat={chat} badges={badges} />
+        {topChats.map((chat) => (
+          <Chat key={chat.key} chat={chat} />
         ))}
       </ChatContainer>
 
       <ChatContainer style={{ height: "83vh" }} ref={bottomRef}>
-        {chats.map((chat, index) => (
-          <Chat key={index} chat={chat} badges={badges} />
+        {chats.map((chat) => (
+          <Chat key={chat.key} chat={chat} />
         ))}
       </ChatContainer>
     </Container>
