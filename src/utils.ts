@@ -86,7 +86,6 @@ export const parseMessage = (data: string): ChatType | null => {
 
   if (!color) {
     color = colors[parseInt(id, 36) % colors.length];
-    console.log("color", color);
   }
 
   return {
