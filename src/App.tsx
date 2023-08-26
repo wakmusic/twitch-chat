@@ -13,6 +13,9 @@ const App: FC = () => {
   const bottomRef = useRef<HTMLDivElement>(null);
   const badges = useRef<BadgeType[]>([]);
 
+  const params = new URLSearchParams(location.search);
+  const showNamed = params.get("showNamed") === "true";
+
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const channelsParam = params.getAll("channel");
@@ -84,20 +87,25 @@ const App: FC = () => {
 
   return (
     <Container>
-      <ChatContainer
-        style={{
-          height: "17vh",
-          borderBottom: "3px solid #26262b",
-          paddingBottom: "4px",
-        }}
-        ref={topRef}
-      >
-        {topChats.map((chat) => (
-          <Chat key={chat.key} chat={chat} />
-        ))}
-      </ChatContainer>
+      {showNamed && (
+        <ChatContainer
+          style={{
+            height: "17vh",
+            borderBottom: "3px solid #26262b",
+            paddingBottom: "4px",
+          }}
+          ref={topRef}
+        >
+          {topChats.map((chat) => (
+            <Chat key={chat.key} chat={chat} />
+          ))}
+        </ChatContainer>
+      )}
 
-      <ChatContainer style={{ height: "83vh" }} ref={bottomRef}>
+      <ChatContainer
+        style={{ height: showNamed ? "83vh" : "100vh" }}
+        ref={bottomRef}
+      >
         {chats.map((chat) => (
           <Chat key={chat.key} chat={chat} />
         ))}
